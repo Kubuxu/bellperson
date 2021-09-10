@@ -480,7 +480,7 @@ where
 #[cfg(feature = "gpu")]
 #[cfg(test)]
 mod tests {
-    use crate::domain::{gpu_fft, parallel_fft, serial_fft, EvaluationDomain, Scalar};
+    use crate::domain::{gpu_fft, parallel_fft, serial_fft, EvaluationDomain};
     use crate::gpu;
     use crate::multicore::Worker;
     use blstrs::{Bls12, Scalar as Fr};
@@ -501,11 +501,9 @@ mod tests {
         for log_d in 1..=20 {
             let d = 1 << log_d;
 
-            let elems = (0..d)
-                .map(|_| Scalar::<Bls12>(Fr::random(&mut rng)))
-                .collect::<Vec<_>>();
-            let mut v1 = EvaluationDomain::<Bls12, _>::from_coeffs(elems.clone()).unwrap();
-            let mut v2 = EvaluationDomain::<Bls12, _>::from_coeffs(elems.clone()).unwrap();
+            let elems = (0..d).map(|_| Fr::random(&mut rng)).collect::<Vec<_>>();
+            let mut v1 = EvaluationDomain::<Bls12>::from_coeffs(elems.clone()).unwrap();
+            let mut v2 = EvaluationDomain::<Bls12>::from_coeffs(elems.clone()).unwrap();
 
             println!("Testing FFT for {} elements...", d);
 
@@ -516,9 +514,9 @@ mod tests {
 
             now = Instant::now();
             if log_d <= log_cpus {
-                serial_fft::<Bls12, _>(&mut v2.coeffs, &v2.omega, log_d);
+                serial_fft::<Bls12>(&mut v2.coeffs, &v2.omega, log_d);
             } else {
-                parallel_fft::<Bls12, _>(&mut v2.coeffs, &worker, &v2.omega, log_d, log_cpus);
+                parallel_fft::<Bls12>(&mut v2.coeffs, &worker, &v2.omega, log_d, log_cpus);
             }
             let cpu_dur = now.elapsed().as_secs() * 1000 + now.elapsed().subsec_millis() as u64;
             println!("CPU ({} cores) took {}ms.", 1 << log_cpus, cpu_dur);
